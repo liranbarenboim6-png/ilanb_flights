@@ -21,12 +21,16 @@
   ],
   "firestore": {
     "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
+    "indexes": "firestore.indexes.json",
+    "database": "(default)",
+    "location": "me-west1",
+    "edition": "standard"
   },
   "storage": {
     "rules": "storage.rules"
   },
   "hosting": {
+    "site": "ilanb-flights",
     "public": "dist",
     "ignore": [
       "firebase.json",
@@ -38,7 +42,7 @@
         "source": "/api/**",
         "function": {
           "functionId": "api",
-          "region": "europe-west1",
+          "region": "me-west1",
           "pinTag": true
         }
       },
@@ -94,5 +98,14 @@
       "port": 4000
     },
     "singleProjectMode": true
+  },
+  "auth": {
+    "providers": {
+      "emailPassword": true
+    },
+    "authorizedDomains": [
+      "ilanb-flights.web.app",
+      "ilanb-flights.firebaseapp.com"
+    ]
   }
 }

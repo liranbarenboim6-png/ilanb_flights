@@ -2,7 +2,17 @@
 
 This guide publishes the Vue SPA to Firebase Hosting and the API to Cloud Functions, with Cloud Firestore, Firebase Authentication and private Cloud Storage in the same real project. The local project `demo-aviation-rights` is only for emulators.
 
-No real Firebase project is preselected in this source package. Google account sign-in and the new project's settings must be completed before a cloud deployment can succeed.
+## Configured project
+
+The repository's `.firebaserc` selects **`ilanb-flights`**. Its public Hosting address is **[https://ilanb-flights.web.app](https://ilanb-flights.web.app)**; deployment and live-test results are tracked in **[VERIFICATION.md](VERIFICATION.md)**.
+
+Billing is linked, and the default **Standard edition, Native mode Firestore database** and private bucket **`ilanb-flights.firebasestorage.app`** are provisioned in **Tel Aviv, Israel (`me-west1`)**. The API and Hosting rewrite also target `me-west1`. Public frontend assets are served through Firebase Hosting's global infrastructure; report records, private evidence and API processing use the Israel region.
+
+Email/Password sign-in, Identity Platform TOTP, disabled public signup, the Hosting authentication domains, reCAPTCHA Enterprise App Check, runtime service permissions and `RATE_LIMIT_SALT` are configured. Production environment files stay outside Git. A fresh checkout still needs those configuration values and an authorized Google sign-in before deployment.
+
+The reusable steps below also cover setting up another project. For this configured project, substitute **`ilanb-flights`** for `YOUR_PROJECT_ID` and retain existing resources and secrets rather than creating replacements.
+
+For a different project, update both `.firebaserc` and `hosting.site` in `firebase.json` to its actual project and Hosting site IDs before deploying.
 
 ## 1. Create the project
 
@@ -10,7 +20,7 @@ No real Firebase project is preselected in this source package. Google account s
 2. Record its **project ID**. Use that value wherever this guide says `YOUR_PROJECT_ID`; do not use a `demo-` ID.
 3. Register a **Web app** in Project settings. Copy its Firebase web configuration values into the environment file in step 4.
 4. Enable the **Blaze** billing plan and review the project's billing account and budget alerts. This application deploys Cloud Functions and uses Cloud Storage, which require billing. See [Functions deployment requirements](https://firebase.google.com/docs/functions/get-started) and [Storage billing requirements](https://firebase.google.com/docs/storage/faqs-storage-changes-announced-sept-2024).
-5. Create a **Cloud Firestore Standard edition, Native mode** default database. Choose the data location deliberately, then create the default Cloud Storage bucket. The function in this source runs in `europe-west1`; choose locations that fit the organization's operational and data requirements.
+5. Create a **Cloud Firestore Standard edition, Native mode** default database in **Tel Aviv, Israel (`me-west1`)**, then create the default Cloud Storage bucket in the same region. The production API and Hosting rewrite use `me-west1`, matching the selected location for reports and private evidence. Database and bucket locations must be chosen when those resources are created; changing this source configuration does not move existing data.
 
 Use production rules when creating the database and bucket. The app's rules deny direct browser access; all report and evidence operations pass through its API.
 
@@ -134,7 +144,7 @@ node scripts/deploy.mjs YOUR_PROJECT_ID --non-interactive
 If a noninteractive first deployment reports that Functions were deployed but their cleanup policy could not be set, configure the policy for this app's region, then rerun the deployment:
 
 ```powershell
-pnpm exec firebase functions:artifacts:setpolicy --project YOUR_PROJECT_ID --location europe-west1 --days 30
+pnpm exec firebase functions:artifacts:setpolicy --project YOUR_PROJECT_ID --location me-west1 --days 30
 ```
 
 This example retains container images for 30 days. Set a period that fits your rollback and cost requirements. It does not delete reports or evidence files.
@@ -143,7 +153,9 @@ After a successful deployment, the application address is:
 
 **`https://YOUR_PROJECT_ID.web.app`**
 
-Firebase Hosting rewrites `/api/**` to the `api` function and remaining routes to `index.html`, so direct links to `/report` and `/admin/login` work. This uses [Firebase Hosting rewrites](https://firebase.google.com/docs/hosting/full-config).
+Firebase Hosting rewrites `/api/**` to the `api` function in `me-west1` and remaining routes to `index.html`, so direct links to `/report` and `/admin/login` work. This uses [Firebase Hosting rewrites](https://firebase.google.com/docs/hosting/full-config). Hosting serves public website files through Firebase's global infrastructure; the regional choice applies to the API, Firestore reports and private Storage bucket.
+
+The local emulator configuration deliberately keeps its existing `europe-west1` function URL. Local requests stay on this computer; this emulator URL does not determine the production data location.
 
 ## 8. Verify the live application
 

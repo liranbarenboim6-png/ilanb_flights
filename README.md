@@ -4,6 +4,8 @@ Hebrew RTL web application for collecting aviation consumer reports and reviewin
 
 The application uses Vue 3, TypeScript and Vite in the browser, Firebase Hosting for the website, Cloud Firestore for report data, Firebase Authentication for staff accounts, Cloud Storage for private evidence, and Cloud Functions for validation and access control.
 
+The configured Firebase project is **`ilanb-flights`**, selected by the repository's `.firebaserc`. Its public address is **[https://ilanb-flights.web.app](https://ilanb-flights.web.app)**. Deployment and live checks are recorded separately in **[VERIFICATION.md](VERIFICATION.md)**.
+
 ## Run locally on Windows
 
 Clone this repository, then run **Start-Local.cmd** from its root folder. You can also double-click that file in Windows Explorer. Keep the terminal window open. The launcher opens the browser when Firebase is ready.
@@ -89,7 +91,7 @@ The launcher uses the built Vue app on Firebase Hosting emulator port 5000. For 
 pnpm dev --mode emulator
 ```
 
-Then open **[http://127.0.0.1:5173](http://127.0.0.1:5173)**. The Vite server forwards `/api` requests to the local Functions emulator. Emulator UI is available at **[http://127.0.0.1:4000](http://127.0.0.1:4000)**.
+Then open **[http://127.0.0.1:5173](http://127.0.0.1:5173)**. The Vite server forwards `/api` requests to the local Functions emulator. Emulator UI is available at **[http://127.0.0.1:4000](http://127.0.0.1:4000)**. The emulator retains its `europe-west1` function URL for compatibility; all emulator services run locally.
 
 | Service | Local port |
 | --- | --- |
@@ -101,11 +103,13 @@ Then open **[http://127.0.0.1:5173](http://127.0.0.1:5173)**. The Vite server fo
 | Emulator UI | 4000 |
 | Vite development server | 5173 |
 
-## Deploy to a real Firebase project
+## Production configuration and deployment
 
-A real project and Google account connection are required. The supplied local demo project is not a hosted cloud project. Follow **[DEPLOYMENT.md](DEPLOYMENT.md)** to create a new Firebase project, configure billing, authentication, App Check and production values, then publish the application.
+Project `ilanb-flights` has billing linked, a Standard edition Firestore database, a private Storage bucket, Email/Password authentication with Identity Platform TOTP, reCAPTCHA Enterprise App Check, and a server rate-limit secret configured. Production environment files are ignored by Git; another checkout must supply its own values and authorized Google sign-in. Follow **[DEPLOYMENT.md](DEPLOYMENT.md)** to deploy this project or configure another one.
 
 The production build is separate from the emulator build. `pnpm build` writes `dist`, while `pnpm build:emulator` writes `dist-emulator`. The deployment helper checks that the selected real project and production environment agree.
+
+The production API is configured for **Tel Aviv, Israel (`me-west1`)**, matching the provisioned Firestore database and private bucket `ilanb-flights.firebasestorage.app`. Report data and evidence use these regional services. Public Firebase Hosting assets are served globally.
 
 ## Troubleshooting
 

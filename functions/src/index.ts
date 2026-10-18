@@ -44,4 +44,6 @@ app.use((error:unknown,_req:Request,res:Response,_next:NextFunction)=>{
  // Never log request bodies, identity tokens, contact information or file names.
  console.error('API operation failed',error instanceof Error?error.name:'UnknownError');res.status(500).json({error:'אירעה שגיאה. נסו שוב מאוחר יותר.'});
 });
-export const api=onRequest({region:'europe-west1',memory:'1GiB',timeoutSeconds:120,maxInstances:10,concurrency:4,invoker:'public',cors:false,secrets:[rateLimitSalt]},app);
+// Preserve the existing local emulator URLs while keeping production processing in Tel Aviv.
+const apiRegion=process.env.FUNCTIONS_EMULATOR==='true'?'europe-west1':'me-west1';
+export const api=onRequest({region:apiRegion,memory:'1GiB',timeoutSeconds:120,maxInstances:10,concurrency:4,invoker:'public',cors:false,secrets:[rateLimitSalt]},app);
