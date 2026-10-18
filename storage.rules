@@ -1,0 +1,9 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // No public URLs or client uploads. Downloads require an audited API call.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

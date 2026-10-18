@@ -1,0 +1,21 @@
+import {createRequire} from 'node:module';
+const require=createRequire(new URL('../functions/package.json',import.meta.url));
+const {initializeApp,applicationDefault}=require('firebase-admin/app');
+const {getAuth}=require('firebase-admin/auth');
+const {getFirestore}=require('firebase-admin/firestore');
+const [projectId,email]=process.argv.slice(2);
+if(!projectId||!email||projectId.startsWith('demo-'))throw new Error('Usage: node scripts/bootstrap-admin.mjs REAL_PROJECT_ID VERIFIED_ADMIN_EMAIL. Requires Application Default Credentials.');
+if(['FIRESTORE_EMULATOR_HOST','FIREBASE_AUTH_EMULATOR_HOST','FIREBASE_STORAGE_EMULATOR_HOST'].some(key=>process.env[key]))throw new Error('Unset emulator variables before provisioning a real administrator.');
+initializeApp({credential:applicationDefault(),projectId});
+const auth=getAuth();const db=getFirestore();
+const user=await auth.getUserByEmail(email);
+if(user.disabled||!user.emailVerified)throw new Error('Create and verify this email address in Firebase Authentication first. The script does not create passwords or bypass verification.');
+await db.runTransaction(async tx=>{
+ const guard=db.collection('system').doc('adminMembership');await tx.get(guard);
+ const existing=await tx.get(db.collection('admins').where('role','==','administrator'));
+ if(existing.docs.some(doc=>doc.data().active===true&&doc.id!==user.uid))throw new Error('An administrator already exists. Add staff using the protected administration screen.');
+ const current=await tx.get(db.collection('admins').doc(user.uid));const now=new Date().toISOString();
+ tx.set(db.collection('admins').doc(user.uid),{role:'administrator',active:true,email:user.email,createdAt:current.data()?.createdAt||now,updatedAt:now});tx.set(guard,{updatedAt:now});tx.create(db.collection('auditLogs').doc(),{adminUserId:user.uid,action:'admin.bootstrap',details:{authUserId:user.uid},createdAt:now});
+});
+console.log(`Administrator role provisioned for ${user.email} in ${projectId}.`);
+console.log('The user must enroll TOTP in the app and sign in again before the API permits access.');
