@@ -160,13 +160,13 @@ The local emulator configuration deliberately keeps its existing `europe-west1` 
 ## 8. Verify the live application
 
 - Open the home page and a direct `/report` link. Confirm that no local emulator banner appears.
-- Submit a clearly labeled test report, including one evidence file. Confirm the report and consent records in Firestore and a private object in the configured bucket.
+- Submit a clearly labeled test report without attachments. Confirm the report and consent records in Firestore and no new evidence records. The form has six steps and no file picker; multipart requests containing file parts must be rejected.
 - Sign in as the verified TOTP administrator. Confirm the test report appears, and test a note, status update and authenticated evidence download.
 - Create a reviewer account and role. Confirm that personal-data export, staff role changes and privacy administration remain unavailable to that account.
 - Confirm unauthenticated requests cannot list reports, fetch evidence or directly read/write the private Firestore and Storage paths.
 - Delete or retain the clearly labeled test report under the organization's policy. Verify project logs, budget alerts and backup configuration.
 
-Firebase Hosting imposes a 60-second timeout on requests forwarded to functions. Large uploads or slow cold starts can time out after the server has received a report. Keep the report form open and retry from that same form: the stable idempotency key recovers the original reference instead of creating a duplicate. Do not refresh and re-enter the report while its outcome is uncertain. See [Hosting and Cloud Functions timeouts](https://firebase.google.com/docs/hosting/functions).
+Firebase Hosting imposes a 60-second timeout on requests forwarded to functions. Slow requests or cold starts can time out after the server has received a report. Keep the report form open and retry from that same form: the stable idempotency key recovers the original reference instead of creating a duplicate. Do not refresh and re-enter the report while its outcome is uncertain. See [Hosting and Cloud Functions timeouts](https://firebase.google.com/docs/hosting/functions).
 
 The runtime service account needs the intended Firestore, Authentication and private bucket permissions. Do not make the bucket public if an authenticated file download fails; inspect the function's service-account permissions and logs.
 
@@ -176,4 +176,4 @@ Review the draft organizational, privacy and consent text, provide the organizat
 
 Configure backups and recovery, monitoring, staff TOTP recovery and ownership of billing/domain accounts. The current API calculates staff search, statistics and patterns by reading the relevant collections in pages; plan indexed queries and maintained aggregates before substantial growth.
 
-Report writes use a Firestore transaction and private staged uploads. Definite failures clean up staged files. An uncertain transaction acknowledgment deliberately preserves files to avoid deleting evidence for a committed report. An authorized operator must reconcile old staged objects against `submissions`, report records and evidence metadata before deleting confirmed orphans. Privacy workflow status changes do not automatically delete records or objects.
+Public uploads are disabled at the form and API. Existing private evidence is retained for authorized staff access. An authorized operator must reconcile any historical staged objects against `submissions`, report records and evidence metadata before deleting confirmed orphans. Privacy workflow status changes do not automatically delete records or objects.

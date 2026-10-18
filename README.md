@@ -48,9 +48,9 @@ The launcher does not export emulator data on shutdown. New local reports and ch
 
 ## Features
 
-- Public landing page, mobile layout and seven-stage report wizard in Hebrew.
+- Public landing page, mobile layout and six-stage report wizard in Hebrew.
 - Primary and secondary categories, several companies and their roles, flight and booking information, narratives, contact history, financial amounts and category-specific questions.
-- Up to five private PDF, JPG, PNG or WEBP files, each up to 5 MiB. The server checks the binary signature, MIME type, extension, size and count.
+- Public file uploads are disabled. The report form has no attachment step, and the API rejects file parts. Previously stored evidence remains private and accessible to authorized staff.
 - Versioned consents and question schema, a unique report reference and retry protection through an idempotency key.
 - Staff dashboard with actual database counts, report filters and pagination, detailed review, notes, status changes, related reports and duplicate marking.
 - Company editing and controlled merging, rule-based pattern groups, statistical CSV export, and administrator-only exports containing personal information.

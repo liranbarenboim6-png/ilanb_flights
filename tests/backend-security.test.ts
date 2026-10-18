@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import type {Request as ExpressRequest} from 'express';
-import {isEmulator,loopbackEndpoint,multipart,sniffFile,csvCell,MAX_FILE_SIZE,rateScope,rateDocumentId} from '../functions/src/security';
+import {isEmulator,loopbackEndpoint,multipart,csvCell,rateScope,rateDocumentId} from '../functions/src/security';
 
 test('CSV cells prevent spreadsheet formulas and escape quotes',()=>{
  assert.equal(csvCell(' =SUM(1,2)'),`"' =SUM(1,2)"`);
@@ -26,17 +26,21 @@ test('shared proxy users have distinct private identity budgets; spoofed prefixe
 });
 const pdf=Buffer.from('%PDF-1.4\n1 0 obj\n<<>>\nendobj\n%%EOF\n');
 async function parseForm(form:FormData){const request=new Request('http://localhost/api/reports',{method:'POST',body:form});const rawBody=Buffer.from(await request.arrayBuffer());const contentType=request.headers.get('content-type')!;return multipart({headers:{'content-type':contentType},rawBody,is:(type:string)=>type==='multipart/form-data'} as unknown as ExpressRequest);}
-test('multipart accepts five files and preserves Hebrew filenames',async()=>{
- const form=new FormData();form.set('payload',JSON.stringify({description:'בדיקה'}));for(let i=0;i<5;i++)form.append('files',new Blob([pdf],{type:'application/pdf'}),`אישור-${i}.pdf`);
- const result=await parseForm(form);assert.equal(result.files.length,5);assert.equal(result.files[0].filename,'אישור-0.pdf');assert.equal(result.files[0].type,'application/pdf');
+test('multipart accepts a report without attachments',async()=>{
+ const form=new FormData();form.set('payload',JSON.stringify({description:'בדיקה'}));
+ const result=await parseForm(form);assert.deepEqual(result.payload,{description:'בדיקה'});assert.deepEqual(result.files,[]);
 });
-test('multipart rejects sixth file, wrong signatures, MIME mismatch, extra fields and oversized file',async()=>{
+test('multipart rejects every file, including empty files and renamed fields',async()=>{
+ for(const [field,bytes,filename] of [['files',pdf,'אישור.pdf'],['files',Buffer.alloc(0),'empty.pdf'],['other',pdf,'file.pdf']] as const){
+  const form=new FormData();form.set('payload','{}');form.append(field,new Blob([bytes],{type:'application/pdf'}),filename);
+  await assert.rejects(parseForm(form),error=>error instanceof Error&&error.message==='צירוף קבצים אינו זמין במערכת.');
+ }
+});
+test('multipart rejects extra fields, oversized bodies and malformed payloads',async()=>{
  const cases:[string,(form:FormData)=>void][]=[
-  ['six files',form=>{for(let i=0;i<6;i++)form.append('files',new Blob([pdf],{type:'application/pdf'}),`${i}.pdf`);}],
-  ['fake pdf',form=>form.append('files',new Blob(['not a pdf'],{type:'application/pdf'}),'fake.pdf')],
-  ['wrong MIME',form=>form.append('files',new Blob([pdf],{type:'image/png'}),'test.pdf')],
   ['extra field',form=>form.append('unexpected','value')],
-  ['oversized',form=>form.append('files',new Blob([Buffer.alloc(MAX_FILE_SIZE+1)],{type:'application/pdf'}),'large.pdf')]
+  ['file text field',form=>form.append('files','data:application/pdf;base64,AAAA')],
+  ['oversized',form=>form.append('files',new Blob([Buffer.alloc(131073)],{type:'application/pdf'}),'large.pdf')],
+  ['invalid JSON',form=>form.set('payload','{')]
  ];for(const [name,configure] of cases){const form=new FormData();form.set('payload','{}');configure(form);await assert.rejects(parseForm(form),undefined,name);}
- assert.equal(sniffFile(Buffer.from('hello')),null);
 });

@@ -1,5 +1,17 @@
 # Verification
 
+## File uploads removed
+
+The current form has six steps and no file picker, drop zone or attachment summary. Public upload instructions have been removed. The API advertises `uploadsEnabled: false` with zero file limits and rejects multipart requests containing any file part, including requests from older browser tabs. Staff access to previously stored private evidence is retained.
+
+- 18 unit tests passed, including payload-only parsing, rejection of valid/empty/renamed file parts, malformed payloads and oversized requests.
+- Vue and Functions TypeScript checks and production/emulator builds passed.
+- 39 integration checks passed through local Hosting: actual attachment rejection, new report without evidence, idempotent retry, staff workflow permissions, historical evidence downloads and direct Firestore/Storage denial.
+- Deployed to live Hosting version `e9826ecf252f874b`. All 10 live HTTP checks passed, including production configuration with uploads disabled and zero file limits.
+- Live browser verification confirmed no file inputs, six-step progress, required contact validation and the review-to-contact edit link. A fictional report without attachments was saved successfully: `AV-2026-33149F1CAC02`.
+
+The initial release checks below describe the earlier version with attachments enabled.
+
 Verified locally on Windows on 2026-10-18 with Node.js 22.23.3, Java 21, Vue 3.5.44, Firebase SDK 13.0.0 and Firebase CLI 15.34.0.
 
 - Vue and Functions TypeScript checks passed.

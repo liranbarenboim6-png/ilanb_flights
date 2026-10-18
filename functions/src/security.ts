@@ -7,8 +7,8 @@ import {getFirestore,Timestamp} from 'firebase-admin/firestore';
 import {defineSecret} from 'firebase-functions/params';
 import type {AdminSession,Role} from '../../shared/types';
 
-export const MAX_FILES=5;
-export const MAX_FILE_SIZE=5*1024*1024;
+export const MAX_FILES=0;
+export const MAX_FILE_SIZE=0;
 export const rateLimitSalt=defineSecret('RATE_LIMIT_SALT');
 export class ApiError extends Error {constructor(public status:number,message:string){super(message);this.name='ApiError';}}
 export const hash=(value:string|Buffer)=>createHash('sha256').update(value).digest('hex');
@@ -64,36 +64,21 @@ export function jsonBody(req:Request,max=65536):unknown{
  return req.body;
 }
 export interface ValidFile{filename:string;type:string;bytes:Buffer;size:number}
-export function sniffFile(bytes:Buffer):string|null{
- if(bytes.length>=8&&bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])))return 'image/png';
- if(bytes.length>=5&&bytes[0]===255&&bytes[1]===216&&bytes[2]===255&&bytes.at(-2)===255&&bytes.at(-1)===217)return 'image/jpeg';
- if(bytes.length>=12&&bytes.subarray(0,4).toString()==='RIFF'&&bytes.subarray(8,12).toString()==='WEBP')return 'image/webp';
- if(bytes.length>=10&&bytes.subarray(0,5).toString()==='%PDF-'&&bytes.subarray(-2048).includes(Buffer.from('%%EOF')))return 'application/pdf';
- return null;
-}
 export async function multipart(req:Request):Promise<{payload:unknown;files:ValidFile[]}>{
  const raw=(req as Request&{rawBody?:Buffer}).rawBody;
  if(!req.is('multipart/form-data'))throw new ApiError(415,'נדרש טופס דיווח תקין.');
  if(!raw||raw.length>MAX_FILES*MAX_FILE_SIZE+131072)throw new ApiError(413,'הבקשה גדולה מהמותר.');
  return new Promise((resolve,reject)=>{
-  let payload:string|undefined,problem:Error|undefined;const files:ValidFile[]=[];
+  let payload:string|undefined,problem:Error|undefined;
   const invalid=(message:string,status=400)=>{problem??=new ApiError(status,message);};
   let parser:ReturnType<typeof busboy>;try{parser=busboy({headers:req.headers,defParamCharset:'utf8',limits:{files:MAX_FILES,fields:1,parts:MAX_FILES+2,fileSize:MAX_FILE_SIZE+1,fieldSize:65537,fieldNameSize:100}});}catch{return reject(new ApiError(400,'מבנה הטופס אינו תקין.'));}
   parser.on('field',(name,value,info)=>{if(name!=='payload'||payload!==undefined||info.valueTruncated||Buffer.byteLength(value)>65536)invalid('נתוני הדיווח אינם תקינים.');else payload=value;});
-  parser.on('file',(name,stream,info)=>{
-   const chunks:Buffer[]=[];let size=0;
-   if(name!=='files')invalid('שדה צרופה אינו מורשה.');
-   stream.on('data',(chunk:Buffer)=>{size+=chunk.length;chunks.push(chunk);});stream.on('limit',()=>invalid('גודל הקובץ חורג מ-5MB.',413));
-   stream.on('end',()=>{
-    const bytes=Buffer.concat(chunks);const type=sniffFile(bytes);const originalFilename=info.filename||'';const extension=originalFilename.split('.').at(-1)?.toLowerCase()||'';
-    const allowed:Record<string,string[]>={'application/pdf':['pdf'],'image/png':['png'],'image/jpeg':['jpg','jpeg'],'image/webp':['webp']};
-    if(size<1||size>MAX_FILE_SIZE||!type||!allowed[type].includes(extension)||info.mimeType!==type){invalid('יש לצרף קובצי PDF, JPG, PNG או WEBP תקינים בלבד.');return;}
-    files.push({filename:originalFilename.replace(/[\x00-\x1f\x7f/\\]/g,'_').slice(0,180),type,bytes,size});
-   });stream.on('error',error=>{problem??=error;});
-  });
-  for(const event of ['filesLimit','fieldsLimit','partsLimit'])parser.on(event,()=>invalid('מספר שדות או קבצים חורג מהמותר.'));
+  // Reject file parts even when sent by an old browser tab or a custom client.
+  parser.on('file',(_name,stream)=>{invalid('צירוף קבצים אינו זמין במערכת.');stream.resume();});
+  parser.on('filesLimit',()=>invalid('צירוף קבצים אינו זמין במערכת.'));
+  for(const event of ['fieldsLimit','partsLimit'])parser.on(event,()=>invalid('מספר שדות חורג מהמותר.'));
   parser.on('error',()=>reject(new ApiError(400,'מבנה הטופס אינו תקין.')));
-  parser.on('close',()=>{if(problem)return reject(problem);if(!payload)return reject(new ApiError(400,'נתוני הדיווח חסרים.'));try{resolve({payload:JSON.parse(payload),files});}catch{reject(new ApiError(400,'נתוני הדיווח אינם תקינים.'));}});
+  parser.on('close',()=>{if(problem)return reject(problem);if(!payload)return reject(new ApiError(400,'נתוני הדיווח חסרים.'));try{resolve({payload:JSON.parse(payload),files:[]});}catch{reject(new ApiError(400,'נתוני הדיווח אינם תקינים.'));}});
   // Cloud Functions has already consumed the request stream; its rawBody is authoritative.
   parser.end(raw);
  });

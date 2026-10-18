@@ -13,7 +13,7 @@ app.use(express.json({limit:'64kb',strict:true}));
 const wrap=(action:(req:Request,res:Response)=>Promise<unknown>|unknown)=>(req:Request,res:Response,next:NextFunction)=>{Promise.resolve().then(()=>action(req,res)).then(value=>{if(!res.headersSent)res.json(value??{ok:true});}).catch(next);};
 app.use((req,_res,next)=>{Promise.resolve().then(async()=>{checkRuntime();if(['POST','PATCH','PUT','DELETE'].includes(req.method)){requireOrigin(req);await requireAppCheck(req);}}).then(()=>next()).catch(next);});
 
-app.get('/api/config',wrap(()=>({mode:mode(),projectId:projectId(),maxFiles:MAX_FILES,maxFileSize:MAX_FILE_SIZE,emailConfigured:false,demoLoginAllowed:isEmulator()})));
+app.get('/api/config',wrap(()=>({mode:mode(),projectId:projectId(),uploadsEnabled:false,maxFiles:MAX_FILES,maxFileSize:MAX_FILE_SIZE,emailConfigured:false,demoLoginAllowed:isEmulator()})));
 app.get('/api/admin/session',wrap(async(req)=>{if(!req.get('authorization'))return {session:null,mode:mode()};return {session:await requireAdmin(req),mode:mode()};}));
 app.post('/api/reports',wrap(async(req,res)=>{
  await consumeLimit(req,'report:transport',600);const {payload,files}=await multipart(req);const input=reportSchema.parse(payload);
