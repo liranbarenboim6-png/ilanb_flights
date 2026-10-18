@@ -1,5 +1,11 @@
 # Verification
 
+## Custom domain prepared; DNS pending
+
+Hosting version `b4d33726594fef3f` includes backend origin support for `https://911teufa.com` and `https://www.911teufa.com`. Firebase Authentication authorized domains and the existing reCAPTCHA Enterprise key both include these names; existing domains and security settings are preserved.
+
+All 10 HTTP checks passed against the existing Firebase address. Two additional requests confirmed the new origins are accepted while App Check remains required. Hosting resources exist for the apex site and the `www` redirect. The custom domains still report `HOST_UNHOSTED`, `OWNERSHIP_MISSING` and certificates pending validation. No successful custom-domain HTTPS or browser submission is claimed. Public DNS returned NXDOMAIN, and the .com registry lookup returned 404 at preparation time. GoDaddy sign-in, confirmation of the exact registered name and DNS changes remain necessary; see DEPLOYMENT.md for the exact records.
+
 ## File uploads removed
 
 The current form has six steps and no file picker, drop zone or attachment summary. Public upload instructions have been removed. The API advertises `uploadsEnabled: false` with zero file limits and rejects multipart requests containing any file part, including requests from older browser tabs. Staff access to previously stored private evidence is retained.

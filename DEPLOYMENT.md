@@ -157,6 +157,22 @@ Firebase Hosting rewrites `/api/**` to the `api` function in `me-west1` and rema
 
 The local emulator configuration deliberately keeps its existing `europe-west1` function URL. Local requests stay on this computer; this emulator URL does not determine the production data location.
 
+## Custom domain: 911teufa.com
+
+Firebase Hosting resources are prepared for `911teufa.com` to serve this site and `www.911teufa.com` to redirect to it. Firebase Authentication and reCAPTCHA Enterprise allow both names. The function's private production environment includes both HTTPS origins in `APP_ORIGIN` alongside the existing Firebase Hosting origins.
+
+Firebase returned these exact DNS requirements for GoDaddy:
+
+| Type | Host | Value |
+| --- | --- | --- |
+| A | `@` | `199.36.158.100` |
+| TXT | `@` | `hosting-site=ilanb-flights` |
+| CNAME | `www` | `ilanb-flights.web.app` |
+
+In GoDaddy, open the domain's DNS management page and add or edit the website records to match. Preserve email MX records and unrelated TXT records. Remove conflicting website A/AAAA/CNAME records only after inspecting their current purpose. The app stays on Firebase; DNS connects the purchased name to it.
+
+At preparation time, public DNS and the .com registry did not return the domain. Confirm its exact spelling, completed registration and nameserver status in GoDaddy. The custom domain is not live until ownership, DNS and HTTPS certificate checks pass. Firebase's [custom-domain guide](https://firebase.google.com/docs/hosting/custom-domain) allows up to 24 hours after correct DNS changes for certificate provisioning.
+
 ## 8. Verify the live application
 
 - Open the home page and a direct `/report` link. Confirm that no local emulator banner appears.

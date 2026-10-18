@@ -105,7 +105,9 @@
     },
     "authorizedDomains": [
       "ilanb-flights.web.app",
-      "ilanb-flights.firebaseapp.com"
+      "ilanb-flights.firebaseapp.com",
+      "911teufa.com",
+      "www.911teufa.com"
     ]
   }
 }
