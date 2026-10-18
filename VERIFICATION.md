@@ -37,6 +37,7 @@ Deployed on 2026-10-18 to **[https://ilanb-flights.web.app](https://ilanb-flight
 - Billing, runtime IAM, server secret, rate-limit TTL configuration, Email/Password sign-in, Identity Platform TOTP and reCAPTCHA Enterprise App Check are configured. Public account signup is disabled.
 - All 10 live HTTP checks passed: production configuration, home/direct routes, unauthorized staff report/export rejection, missing App Check and foreign-origin write rejection, and direct Firestore/Storage access rejection.
 - A complete seven-stage fictional report with one JPEG evidence file was submitted through the public browser form using real App Check. Reference: `AV-2026-3ADDDB1FCF0B`. The browser confirmed successful storage. An image with a mismatched extension was correctly rejected first.
+- All 16 read-only persistence checks passed: exactly one report and evidence record, normalized reporter/consent/flight/answer links and schema versions, separate purchase/refund-request amounts of 123.45, and matching private JPEG object metadata and size. Anonymous object downloads returned 401/403.
 - Function build-image cleanup is configured for 30 days in `me-west1`.
 
 The initial owner Auth account and inactive administrator membership are prepared. Owner password setup, actual email verification, TOTP enrollment and staff dashboard checks still require the owner's participation. No production MFA or email verification bypass was used. Staff role and workflow integration tests above were completed against the local emulators.
