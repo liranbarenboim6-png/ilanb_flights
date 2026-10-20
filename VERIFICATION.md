@@ -6,6 +6,13 @@ Hosting version `b4d33726594fef3f` includes backend origin support for `https://
 
 All 10 HTTP checks passed against the existing Firebase address. Two additional requests confirmed the new origins are accepted while App Check remains required. Hosting resources exist for the apex site and the `www` redirect. The custom domains still report `HOST_UNHOSTED`, `OWNERSHIP_MISSING` and certificates pending validation. No successful custom-domain HTTPS or browser submission is claimed. Public DNS returned NXDOMAIN, and the .com registry lookup returned 404 at preparation time. GoDaddy sign-in, confirmation of the exact registered name and DNS changes remain necessary; see DEPLOYMENT.md for the exact records.
 
+## Supplied logo — 2026-10-20
+
+- Replaced the earlier shield with the user-supplied airplane/trails wordmark in the public header/footer, staff sign-in and staff sidebar. Removed duplicate wordmark text and adjusted logo sizes and sticky offsets for the new proportions.
+- The JPEG asset matches the uploaded file byte-for-byte. The display viewport only trims outside whitespace; the browser icon embeds the same artwork and frames its airplane.
+- Production Vue build and type checking passed. Browser checks confirmed desktop and 390 × 844 mobile rendering without horizontal overflow, plus local staff sign-in/sidebar placement with fictional demo data.
+- Published to Hosting version `ef38cc29537f1fc6`; live HTML and all six checked assets, including the logo and favicon, match the local production output. Live browser refresh confirmed the supplied logo.
+
 ## Reference redesign — 2026-10-20
 
 - Applied the supplied ivory/navy/teal/mint/lime design to the homepage, shared navigation, report form, information pages and staff branding. New shield/wing SVG identity and optimized WebP artwork are included.

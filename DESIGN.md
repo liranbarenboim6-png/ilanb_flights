@@ -1,6 +1,6 @@
 # Reference design — 20 October 2026
 
-The public website follows the supplied design: ivory background, navy typography and pill buttons, teal shield/wing identity, mint panels and lime accents. The homepage has a suitcase/airplane hero, four reporting shortcuts, a three-part process, an airplane-window banner and accessible FAQ disclosures. The same identity is used in the report form, information pages and staff area.
+The public website follows the supplied design: ivory background, navy typography and pill buttons, mint panels and lime accents. The homepage has a suitcase/airplane hero, four reporting shortcuts, a three-part process, an airplane-window banner and accessible FAQ disclosures. The same identity is used in the report form, information pages and staff area.
 
 The reference's baggage shortcut is replaced by refunds to respect the requested reporting scope. Baggage, service refusal/treatment and holiday-package/hotel categories are retired for new reports. Historical reports remain readable. New contact permission is recorded separately as `caseContact`; earlier `legalContact` consent is not reinterpreted.
 
@@ -8,7 +8,7 @@ The reference's baggage shortcut is replaced by refunds to respect the requested
 
 - `public/images/hero-luggage.webp`: 1080 × 1080, approximately 81 KB.
 - `public/images/flight-window.webp`: 1800 × 600, approximately 73 KB.
-- `src/components/BrandMark.vue` and `public/favicon.svg`: scalable shield and wing mark.
+- `public/images/organization-logo.jpg`: the user's supplied airplane/trails Hebrew logo, copied unchanged. `BrandMark.vue` uses an SVG viewport to remove the surrounding whitespace at display time. The browser icon embeds the same image and frames the airplane. This replaces the earlier shield/wing mark across the header, footer, staff sign-in and staff sidebar.
 
 The two raster images were generated with the built-in image generation tool, using the supplied image as a visual reference, then proportionally resized and converted to WebP. All interface text is real selectable Hebrew rendered by Vue, rather than embedded in artwork. Assistant is served locally under its bundled font license.
 

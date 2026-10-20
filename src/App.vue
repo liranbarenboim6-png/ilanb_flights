@@ -33,7 +33,6 @@ function closeMenu() {
     <div class="container header-inner">
       <RouterLink to="/" class="brand" aria-label="ארגון צרכני התעופה בישראל — עמוד הבית">
         <BrandMark class="brand-symbol" />
-        <span class="brand-copy"><strong>ארגון צרכני<br />התעופה בישראל</strong></span>
       </RouterLink>
       <nav id="main-navigation" ref="navigation" class="site-nav" :class="{'is-open': menu}" aria-label="ניווט ראשי" @click="menu = false">
         <RouterLink to="/purpose">על הארגון</RouterLink>
@@ -49,7 +48,7 @@ function closeMenu() {
     <div class="container">
       <div class="footer-main">
         <nav class="footer-nav" aria-label="ניווט תחתון"><RouterLink to="/purpose">על הארגון</RouterLink><RouterLink to="/#how-it-works">איך זה עובד</RouterLink><RouterLink to="/contact">יצירת קשר</RouterLink></nav>
-        <RouterLink class="brand footer-brand" to="/" aria-label="ארגון צרכני התעופה בישראל — עמוד הבית"><BrandMark class="brand-symbol" /><span class="brand-copy"><strong>ארגון צרכני<br />התעופה בישראל</strong></span></RouterLink>
+        <RouterLink class="brand footer-brand" to="/" aria-label="ארגון צרכני התעופה בישראל — עמוד הבית"><BrandMark class="brand-symbol" /></RouterLink>
       </div>
       <div class="footer-bottom">
         <span>© {{new Date().getFullYear()}} ארגון צרכני התעופה בישראל</span>

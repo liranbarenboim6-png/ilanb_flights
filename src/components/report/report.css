@@ -19,8 +19,8 @@
 .report-intro p{font-size:18px;color:#52677a;margin-top:16px}
 .report-trust{color:var(--navy);background:#edf8f2;border-color:#d8eae1;border-radius:999px;font-size:14px;padding:12px 18px}
 .report-trust svg{color:#137b78}
-.report-layout{grid-template-columns:205px minmax(0,1fr) 195px;gap:26px;scroll-margin-top:120px}
-.report-sidebar,.report-help{top:112px}
+.report-layout{grid-template-columns:205px minmax(0,1fr) 195px;gap:26px;scroll-margin-top:140px}
+.report-sidebar,.report-help{top:132px}
 .report-progress-caption{font-size:13px;color:#52677a}
 .report-progress-caption>span:first-child{font-size:16px;color:var(--navy)}
 .report-progress{height:6px;background:#e0e9e3}

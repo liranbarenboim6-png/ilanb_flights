@@ -11,6 +11,10 @@
 /* Shared identity, with a quiet working surface for staff. */
 .admin-brand-mark{background:var(--page);border:0;border-radius:12px}
 .admin-brand-mark svg{width:30px;height:37px;transform:none}
+.admin-sidebar .admin-brand{flex-direction:column;gap:9px;padding:0;text-align:center}
+.admin-sidebar .admin-brand-logo{display:block;width:180px;height:113px;background:#fff;border-radius:12px;overflow:hidden}
+.admin-sidebar .admin-brand small{margin:0;font-size:11px}
+.admin-sidebar .admin-nav-label{margin-top:24px}
 .admin-sidebar nav>a.active{background:#ddf4ed18}
 .admin-sidebar nav>a.active>svg:first-child{color:var(--lime)}
 .admin-panel,.stat-card,.admin-filter-panel,.admin-pattern-group,.admin-role-grid>div{border-radius:14px}
