@@ -69,7 +69,7 @@ export async function saveSubmission(input:ReportInput,files:ValidFile[]){
    const newCompanies=new Set<string>();for(const [position,row] of companyRows.entries()){
     if(row.create&&!newCompanies.has(row.id)){tx.set(db().collection('companies').doc(row.id),{name:row.company.name,normalizedName:normalizeCompany(row.company.name),companyType:row.company.companyType,createdAt});newCompanies.add(row.id);}
     tx.set(db().collection('companyAliases').doc(row.key),{companyId:row.id,normalizedName:normalizeCompany(row.company.name),companyType:row.company.companyType});
-    tx.create(db().collection('reportCompanies').doc(`${reportId}-${position}`),{reportId,companyId:row.id,role:row.company.role,position,originalName:row.company.name,originalCompanyType:row.company.companyType});
+    tx.create(db().collection('reportCompanies').doc(`${reportId}-${position}`),{reportId,companyId:row.id,position,originalName:row.company.name,originalCompanyType:row.company.companyType});
    }
    for(const evidence of uploaded)tx.create(db().collection('evidence').doc(evidence.id),{...evidence,reportId});
    tx.update(submissionRef,{state:'complete',reference,reportId,updatedAt:createdAt,leaseUntil:0});

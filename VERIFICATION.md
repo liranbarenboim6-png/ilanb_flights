@@ -6,6 +6,16 @@ Hosting version `b4d33726594fef3f` includes backend origin support for `https://
 
 All 10 HTTP checks passed against the existing Firebase address. Two additional requests confirmed the new origins are accepted while App Check remains required. Hosting resources exist for the apex site and the `www` redirect. The custom domains still report `HOST_UNHOSTED`, `OWNERSHIP_MISSING` and certificates pending validation. No successful custom-domain HTTPS or browser submission is claimed. Public DNS returned NXDOMAIN, and the .com registry lookup returned 404 at preparation time. GoDaddy sign-in, confirmation of the exact registered name and DNS changes remain necessary; see DEPLOYMENT.md for the exact records.
 
+## Reference redesign — 2026-10-20
+
+- Applied the supplied ivory/navy/teal/mint/lime design to the homepage, shared navigation, report form, information pages and staff branding. New shield/wing SVG identity and optimized WebP artwork are included.
+- Removed the three requested reporting categories, supplier-role field and duplicate narrative fields for new submissions; retained historical staff visibility. New optional permission to contact a reporter for handling the case has its own `caseContact` key and consent version.
+- Updated the public contact email to `911teufa@gmail.com`. File uploads remain disabled at the interface and API.
+- 21 unit tests, Vue/Functions type checks, production build and 40 local API/permission checks passed.
+- Browser checks covered desktop, 390 × 844 mobile, mobile-menu keyboard close, category shortcuts, FAQ expansion, removed fields and the six-step flow. Fictional local report `AV-2026-28E1B7F2F2F7` saved successfully; no real consumer report or production test record was created for this check.
+- Existing browser tabs from the earlier form version must refresh before sending because legacy submission fields are no longer accepted by the API.
+- Deployed frontend and API successfully to `ilanb-flights`, Hosting version `eb7beac3f54945e5`. All 10 live HTTP/security checks passed. The deployed HTML and five application assets matched the local production build byte-for-byte. Live browser checks confirmed the new homepage, eight active report categories and zero file inputs.
+
 ## File uploads removed
 
 The current form has six steps and no file picker, drop zone or attachment summary. Public upload instructions have been removed. The API advertises `uploadsEnabled: false` with zero file limits and rejects multipart requests containing any file part, including requests from older browser tabs. Staff access to previously stored private evidence is retained.

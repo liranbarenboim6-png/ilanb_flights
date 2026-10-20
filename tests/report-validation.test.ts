@@ -2,10 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {normalizeDynamicAnswers,prepareReportPayload,questionsForCategories} from '../src/lib/form-values';
 import {reportSchema,validateDynamicAnswers} from '../shared/validation';
+import {categories,reportCategories,categoryLabel,CONSENT_VERSION} from '../shared/catalog';
 import type {ReportInput} from '../shared/types';
 
 function report():ReportInput{
-  return {primaryCategory:'cancellation',secondaryCategories:[],companies:[{name:'חברה פיקטיבית לבדיקה',companyType:'airline',role:'מפעילת הטיסה'}],bookingChannel:'direct',incidentDate:'2026-10-10',passengerCount:2,flight:{},description:'תיאור פיקטיבי ארוך מספיק של אירוע ביטול טיסה לצורך בדיקה בלבד.',companyContacted:false,resolved:false,currency:'ILS',dynamicAnswers:{},reporter:{fullName:'משתמש בדיקה',email:'test@example.invalid',phone:'050-0000000',isPassenger:true},consents:{privacy:true,legalContact:false,updates:false},startedAt:Date.now()-5000,idempotencyKey:'3cc665d4-6fea-4c15-b2e7-955e4f059841'};
+  return {primaryCategory:'cancellation',secondaryCategories:[],companies:[{name:'חברה פיקטיבית לבדיקה',companyType:'airline'}],bookingChannel:'direct',incidentDate:'2026-10-10',passengerCount:2,flight:{},description:'תיאור פיקטיבי ארוך מספיק של אירוע ביטול טיסה לצורך בדיקה בלבד.',companyContacted:false,resolved:false,currency:'ILS',dynamicAnswers:{},reporter:{fullName:'משתמש בדיקה',email:'test@example.invalid',phone:'050-0000000',isPassenger:true},consents:{privacy:true,caseContact:false,updates:false},startedAt:Date.now()-5000,idempotencyKey:'3cc665d4-6fea-4c15-b2e7-955e4f059841'};
 }
 
 test('secondary categories add questions and overlapping question keys render once',()=>{
@@ -58,20 +59,45 @@ test('dynamic flight answers also populate structured flight data and preserve r
 });
 
 test('privacy is required; optional contact and updates remain separate and unchecked',()=>{
-  const fixture=report();assert.equal(reportSchema.safeParse(fixture).success,true);assert.equal(fixture.consents.legalContact,false);assert.equal(fixture.consents.updates,false);
+  const fixture=report();assert.equal(reportSchema.safeParse(fixture).success,true);assert.equal(fixture.consents.caseContact,false);assert.equal(fixture.consents.updates,false);
   fixture.consents.privacy=false;const result=reportSchema.safeParse(fixture);assert.equal(result.success,false);if(!result.success)assert.ok(result.error.issues.some(issue=>issue.path.join('.')==='consents.privacy'));
 });
 
-test('conditional intermediary and reporter relationship and company role are required',()=>{
-  const fixture=report();fixture.bookingChannel='intermediary';fixture.reporter.isPassenger=false;fixture.companies[0].role='';
+test('conditional intermediary and reporter relationship remain required',()=>{
+  const fixture=report();fixture.bookingChannel='intermediary';fixture.reporter.isPassenger=false;
   const result=reportSchema.safeParse(fixture);assert.equal(result.success,false);
-  if(!result.success){const paths=result.error.issues.map(issue=>issue.path.join('.'));assert.ok(paths.includes('intermediaryName'));assert.ok(paths.includes('reporter.relationship'));assert.ok(paths.includes('companies.0.role'));}
+  if(!result.success){const paths=result.error.issues.map(issue=>issue.path.join('.'));assert.ok(paths.includes('intermediaryName'));assert.ok(paths.includes('reporter.relationship'));}
 });
 
-test('duplicate normalized company names cannot silently discard an involved-company role',()=>{
-  const fixture=report();fixture.companies=[{name:'  DEMO   AIR  ',companyType:'airline',role:'מפעילת הטיסה'},{name:'demo air',companyType:'airline',role:'גביית התשלום'}];
+test('duplicate normalized company names remain invalid after removing the role field',()=>{
+  const fixture=report();fixture.companies=[{name:'  DEMO   AIR  ',companyType:'airline'},{name:'demo air',companyType:'airline'}];
   const result=reportSchema.safeParse(fixture);assert.equal(result.success,false);
   if(!result.success)assert.ok(result.error.issues.some(issue=>issue.path.join('.')==='companies.1.name'));
   fixture.companies[1].companyType='agency';assert.equal(reportSchema.safeParse(fixture).success,true);
+});
+
+test('retired report categories are rejected for both primary and secondary submissions while historical labels remain available',()=>{
+  for(const retired of ['baggage','package','service'] as const){
+    assert.equal(reportCategories.some(category=>category.id===retired),false);
+    assert.ok(categories.some(category=>category.id===retired));
+    assert.notEqual(categoryLabel(retired),retired);
+    assert.equal(reportSchema.safeParse({...report(),primaryCategory:retired}).success,false);
+    assert.equal(reportSchema.safeParse({...report(),secondaryCategories:[retired]}).success,false);
+  }
+});
+
+test('new reports require no supplier role or duplicate story fields and reject removed fields',()=>{
+  const fixture=report();
+  assert.equal(reportSchema.safeParse(fixture).success,true);
+  assert.equal(reportSchema.safeParse({...fixture,companies:[{...fixture.companies[0],role:'old field'}]}).success,false);
+  for(const field of ['expectedService','actualOutcome'])assert.equal(reportSchema.safeParse({...fixture,[field]:'old field'}).success,false);
+});
+
+test('case contact is a separate optional consent and old legal consent is never reinterpreted',()=>{
+  const fixture=report();
+  assert.equal(reportSchema.safeParse(fixture).success,true);
+  assert.equal(reportSchema.safeParse({...fixture,consents:{...fixture.consents,caseContact:true}}).success,true);
+  assert.equal(reportSchema.safeParse({...fixture,consents:{privacy:true,legalContact:true,updates:false}}).success,false);
+  assert.equal(CONSENT_VERSION,'2026-10-case-contact-draft-2');
 });
 

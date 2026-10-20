@@ -2,7 +2,8 @@
 import {computed,onMounted,provide,ref,watch} from 'vue';
 import {useRoute,useRouter,RouterLink} from 'vue-router';
 import {signOut} from 'firebase/auth';
-import {Plane,LayoutDashboard,Files,Building2,Fingerprint,Users,ShieldCheck,LogOut,Menu,ArrowUpLeft,ChevronLeft,LockKeyhole} from '@lucide/vue';
+import BrandMark from '../components/BrandMark.vue';
+import {LayoutDashboard,Files,Building2,Fingerprint,Users,ShieldCheck,LogOut,Menu,ArrowUpLeft,ChevronLeft,LockKeyhole} from '@lucide/vue';
 import {api} from '../lib/api';
 import {firebaseAuth} from '../lib/firebase';
 import type {AdminSession} from '../../shared/types';
@@ -36,7 +37,7 @@ onMounted(load);
   <div v-else class="admin-shell" dir="rtl">
     <button v-if="open" class="admin-backdrop" aria-label="סגירת תפריט" @click="open=false"/>
     <aside :class="['admin-sidebar',{'is-open':open}]">
-      <RouterLink to="/admin" class="admin-brand"><span class="admin-brand-mark"><Plane :size="27"/></span><span>צרכני התעופה<small>סביבת הניהול של הארגון</small></span></RouterLink>
+      <RouterLink to="/admin" class="admin-brand"><span class="admin-brand-mark"><BrandMark /></span><span>צרכני התעופה<small>סביבת הניהול של הארגון</small></span></RouterLink>
       <div class="admin-nav-label">סביבת עבודה</div><nav aria-label="ניווט ניהול"><RouterLink v-for="link in visibleLinks" :key="link.key" :to="link.path" :class="{active:section===link.key}"><component :is="link.icon" :size="19"/>{{link.label}}<ChevronLeft v-if="section===link.key" :size="15"/></RouterLink></nav>
       <div class="admin-sidebar-bottom"><div class="admin-private-note"><LockKeyhole :size="18"/><span>מרחב פרטי לצוות המורשה<small>הגישה והפעולות נבדקות בשרת</small></span></div><RouterLink to="/" class="admin-public-link">לאתר הציבורי<ArrowUpLeft :size="16"/></RouterLink></div>
     </aside>

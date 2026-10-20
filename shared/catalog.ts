@@ -7,6 +7,8 @@ export const categories: {id:Category;label:string;short:string}[] = [
  {id:'package',label:'בעיה בחבילת נופש או מלון',short:'חבילות נופש'}, {id:'service',label:'יחס בלתי הולם או סירוב למתן שירות',short:'שירות'},
  {id:'other',label:'אחר',short:'אחר'}
 ];
+// Keep the complete catalog for historical staff records and statistics.
+export const reportCategories=categories.filter(category=>!['baggage','package','service'].includes(category.id));
 export const statuses: {id:Status;label:string;color:string}[] = [
  {id:'new',label:'חדש',color:'blue'}, {id:'reviewing',label:'בבדיקה',color:'amber'}, {id:'reviewed',label:'נבדק',color:'green'},
  {id:'missing_info',label:'חסר מידע',color:'gray'}, {id:'recurring',label:'חשד להפרה חוזרת',color:'purple'},
@@ -18,7 +20,7 @@ export const companyTypes: {id:CompanyType;label:string}[] = [
 ];
 export type DynamicQuestion = {key:string;label:string;type:'text'|'number'|'datetime-local'|'date'|'boolean'|'select'; options?:string[];required?:boolean};
 export const QUESTION_SCHEMA_VERSION = 1;
-export const CONSENT_VERSION = '2026-10-draft-1';
+export const CONSENT_VERSION = '2026-10-case-contact-draft-2';
 export const dynamicQuestions: Partial<Record<Category,DynamicQuestion[]>> = {
  cancellation:[{key:'scheduled_flight',label:'מועד הטיסה המתוכנן',type:'datetime-local'},{key:'cancellation_notice',label:'מתי התקבלה הודעת הביטול?',type:'datetime-local'},{key:'alternative_offered',label:'האם הוצעה טיסה חלופית?',type:'boolean'},{key:'refund_offered',label:'האם הוצע החזר כספי?',type:'boolean'},{key:'refund_received',label:'האם התקבל החזר בפועל?',type:'boolean'},{key:'additional_expenses',label:'האם נגרמו הוצאות נוספות?',type:'boolean'}],
  delay:[{key:'scheduled_departure',label:'מועד המראה מתוכנן',type:'datetime-local'},{key:'actual_departure',label:'מועד המראה בפועל',type:'datetime-local'},{key:'scheduled_arrival',label:'מועד נחיתה מתוכנן',type:'datetime-local'},{key:'actual_arrival',label:'מועד נחיתה בפועל',type:'datetime-local'},{key:'assistance_provided',label:'האם סופקו מזון, לינה או שירותי סיוע?',type:'boolean'}],
