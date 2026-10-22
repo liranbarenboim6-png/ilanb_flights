@@ -18,4 +18,4 @@ await db.runTransaction(async tx=>{
  tx.set(db.collection('admins').doc(user.uid),{role:'administrator',active:true,email:user.email,createdAt:current.data()?.createdAt||now,updatedAt:now});tx.set(guard,{updatedAt:now});tx.create(db.collection('auditLogs').doc(),{adminUserId:user.uid,action:'admin.bootstrap',details:{authUserId:user.uid},createdAt:now});
 });
 console.log(`Administrator role provisioned for ${user.email} in ${projectId}.`);
-console.log('The user must enroll TOTP in the app and sign in again before the API permits access.');
+console.log('The verified user can sign in with email and password. The API also checks the active staff role.');

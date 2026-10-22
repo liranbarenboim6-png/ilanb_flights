@@ -33,4 +33,4 @@ for(let i=0;i<12;i++){
 batch.set(marker,{createdAt:new Date().toISOString(),fictional:true});await batch.commit();
 console.log('Seeded 12 fictional reports into local Firestore.');
 console.log('Local demo: admin@example.invalid or reviewer@example.invalid / DemoOnly!2026.');
-console.log('These accounts work only in the Firebase Auth emulator; production requires verified email and TOTP MFA.');
+console.log('These accounts work only in the Firebase Auth emulator; production requires verified email, password and an active staff role.');

@@ -8,7 +8,7 @@ The repository's `.firebaserc` selects **`ilanb-flights`**. Its public Hosting a
 
 Billing is linked, and the default **Standard edition, Native mode Firestore database** and private bucket **`ilanb-flights.firebasestorage.app`** are provisioned in **Tel Aviv, Israel (`me-west1`)**. The API and Hosting rewrite also target `me-west1`. Public frontend assets are served through Firebase Hosting's global infrastructure; report records, private evidence and API processing use the Israel region.
 
-Email/Password sign-in, Identity Platform TOTP, disabled public signup, the Hosting authentication domains, reCAPTCHA Enterprise App Check, runtime service permissions and `RATE_LIMIT_SALT` are configured. Production environment files stay outside Git. A fresh checkout still needs those configuration values and an authorized Google sign-in before deployment.
+Email/Password sign-in, Identity Platform, disabled public signup, the Hosting authentication domains, reCAPTCHA Enterprise App Check, runtime service permissions and `RATE_LIMIT_SALT` are configured. Staff use email and password, with verified email and active staff membership required by the API. MFA providers are disabled for this login policy. Production environment files stay outside Git. A fresh checkout still needs those configuration values and an authorized Google sign-in before deployment.
 
 The reusable steps below also cover setting up another project. For this configured project, substitute **`ilanb-flights`** for `YOUR_PROJECT_ID` and retain existing resources and secrets rather than creating replacements.
 
@@ -27,11 +27,11 @@ Use production rules when creating the database and bucket. The app's rules deny
 ## 2. Configure staff authentication
 
 1. In Firebase Authentication, enable **Email/Password** sign-in.
-2. Upgrade Authentication to **Identity Platform** and enable **TOTP** as a second factor. TOTP requires Identity Platform and verified staff email addresses. See the [official TOTP setup guide](https://firebase.google.com/docs/auth/web/totp-mfa).
+2. Keep SMS and TOTP multi-factor authentication disabled. If this project previously enabled either provider, complete the migration in step 6. The existing Identity Platform upgrade can remain; a new project does not need to enable MFA for this login flow.
 3. Add your Hosting domains to Authentication's authorized domains, including `YOUR_PROJECT_ID.web.app` and any custom domain you will use.
 4. Create the initial administrator's email/password account in Firebase Authentication. The web application does not offer self-registration.
 
-The setup script described in step 6 enables TOTP through the Admin SDK. Do not grant public access to Firestore to work around an authentication error.
+Keep public signup disabled and use Email/Password sign-in. A successful password sign-in alone does not grant a staff role: the API verifies the email, token, account status and active Firestore membership. Do not grant public access to Firestore to work around an authentication error. App Check continues protecting production API writes.
 
 ## 3. Register Firebase App Check
 
@@ -96,16 +96,52 @@ $aviationPnpm = Join-Path $env:USERPROFILE '.cache\codex-runtimes\codex-primary-
 
 Use the same `& $aviationNode $aviationPnpm` prefix in place of `pnpm` for the other commands. You do not need to change PowerShell execution policy.
 
-## 6. Enable TOTP and provision the first administrator
+## 6. Configure password-only access and provision the first administrator
 
-The one-time setup scripts use **Application Default Credentials** with permission to administer the selected project's Authentication and Firestore data. Firebase CLI login and Admin SDK credentials are separate. A project administrator can authenticate locally with the [Google Cloud CLI](https://cloud.google.com/sdk/docs/install):
+The one-time setup uses **Application Default Credentials** with permission to administer the selected project's Authentication and Firestore data. Firebase CLI login and Admin SDK credentials are separate. A project administrator can authenticate locally with the [Google Cloud CLI](https://cloud.google.com/sdk/docs/install):
 
 ```powershell
 gcloud auth application-default login
-node scripts/enable-totp.mjs YOUR_PROJECT_ID
 ```
 
-After enabling TOTP, complete the first deployment in step 7, then return here to verify and provision the initial administrator. The deployed app login offers the email verification flow after a correct email/password sign-in. Open the received verification link, then sign in again. The production API will refuse staff data access until verification, TOTP sign-in and an active staff role are all present.
+For an existing Identity Platform project that previously enabled MFA, run the following from this source folder in PowerShell after selecting and checking the real project ID. This changes only the project MFA configuration, preserving accounts, passwords, staff memberships, reports, authorized domains, public-signup restrictions and other provider settings:
+
+```powershell
+$env:GOOGLE_CLOUD_PROJECT = 'YOUR_PROJECT_ID'
+@'
+import {createRequire} from 'node:module';
+const require=createRequire(new URL('./functions/package.json',import.meta.url));
+const {initializeApp,applicationDefault}=require('firebase-admin/app');
+const {getAuth}=require('firebase-admin/auth');
+const projectId=process.env.GOOGLE_CLOUD_PROJECT;
+if(!projectId||projectId.startsWith('demo-')||projectId==='YOUR_PROJECT_ID')throw Error('Select the intended real Firebase project first.');
+if(Object.keys(process.env).some(key=>key.endsWith('_EMULATOR_HOST')&&process.env[key]))throw Error('Unset emulator variables before configuring cloud authentication.');
+initializeApp({credential:applicationDefault(),projectId});
+const manager=getAuth().projectConfigManager();
+const current=await manager.getProjectConfig();
+await manager.updateProjectConfig({multiFactorConfig:{
+ state:'DISABLED',
+ factorIds:[],
+ providerConfigs:(current.multiFactorConfig?.providerConfigs||[]).map(provider=>({...provider,state:'DISABLED'})),
+}});
+const verified=await manager.getProjectConfig();
+if(verified.multiFactorConfig?.state!=='DISABLED'||verified.multiFactorConfig?.factorIds?.length||verified.multiFactorConfig?.providerConfigs?.some(provider=>provider.state!=='DISABLED'))throw Error('MFA disabling was not confirmed.');
+console.log(`Password-only project authentication configured in ${projectId}.`);
+'@ | node --input-type=module
+```
+
+Inspect the selected project's Authentication settings afterward: Email/Password remains enabled, public signup remains disabled, and SMS/TOTP MFA providers are disabled. The legacy `scripts/enable-totp.mjs` command now refuses to change configuration and points to this password-only setup.
+
+Disabling project providers does not remove an existing user's enrolled factors. If a staff account still receives a Firebase MFA challenge, an authorized project administrator must review that account and remove its enrolled second factors as part of this migration. Use the Admin SDK against that specific existing UID, then revoke its refresh tokens so the user signs in afresh:
+
+```javascript
+await getAuth().updateUser('REVIEWED_STAFF_UID', {multiFactor: {enrolledFactors: null}});
+await getAuth().revokeRefreshTokens('REVIEWED_STAFF_UID');
+```
+
+Do not delete or recreate the account, reset its password, or remove its Firestore role or reports. Do not apply this user migration to unrelated accounts. The [Admin SDK user-update documentation](https://firebase.google.com/docs/auth/admin/manage-users#update_a_user) describes updating existing accounts.
+
+Complete the first deployment in step 7, then return here to verify and provision the initial administrator. The deployed app login offers the email verification flow after a correct email/password sign-in. Open the received verification link, then sign in again. The production API will refuse staff data access until verified email and an active staff role are both present.
 
 After the email has been verified, grant the first role:
 
@@ -115,7 +151,7 @@ node scripts/bootstrap-admin.mjs YOUR_PROJECT_ID admin@YOUR_ORGANIZATION_DOMAIN
 
 The script looks up the existing verified Auth account and creates its Firestore administrator membership with an audit record. It refuses emulator endpoints and does not create a password or bypass email verification.
 
-After deployment, the verified and provisioned first admin can enroll an authenticator from the login page. Scan the QR code or enter the displayed key, confirm the TOTP code, and sign in again. Additional staff are created in Firebase Authentication and receive roles in the app's **Users and permissions** screen.
+After deployment, the verified and provisioned first admin signs in using their email and password. There is no phone-number, QR-code or second-factor enrollment step. Additional staff are created in Firebase Authentication and receive roles in the app's **Users and permissions** screen. A valid Firebase account without an active staff membership cannot access the dashboard.
 
 ## 7. Build and deploy
 
@@ -177,7 +213,7 @@ At preparation time, public DNS and the .com registry did not return the domain.
 
 - Open the home page and a direct `/report` link. Confirm that no local emulator banner appears.
 - Submit a clearly labeled test report without attachments. Confirm the report and consent records in Firestore and no new evidence records. The form has six steps and no file picker; multipart requests containing file parts must be rejected.
-- Sign in as the verified TOTP administrator. Confirm the test report appears, and test a note, status update and authenticated evidence download.
+- Sign in as a verified administrator using email and password. Confirm the login shows no phone, QR-code or second-factor prompt, the test report appears, and note updates and authenticated evidence download remain protected. Confirm wrong passwords, unverified accounts and accounts without active staff membership are denied access.
 - Create a reviewer account and role. Confirm that personal-data export, staff role changes and privacy administration remain unavailable to that account.
 - Confirm unauthenticated requests cannot list reports, fetch evidence or directly read/write the private Firestore and Storage paths.
 - Delete or retain the clearly labeled test report under the organization's policy. Verify project logs, budget alerts and backup configuration.
@@ -190,6 +226,6 @@ The runtime service account needs the intended Firestore, Authentication and pri
 
 Review the draft organizational, privacy and consent text, provide the organization's real contact information, and approve retention, access-request and deletion procedures. Email report confirmations are currently disabled; only the on-screen reference is provided.
 
-Configure backups and recovery, monitoring, staff TOTP recovery and ownership of billing/domain accounts. The current API calculates staff search, statistics and patterns by reading the relevant collections in pages; plan indexed queries and maintained aggregates before substantial growth.
+Configure backups and recovery, monitoring, staff password recovery and ownership of billing/domain accounts. The current API calculates staff search, statistics and patterns by reading the relevant collections in pages; plan indexed queries and maintained aggregates before substantial growth.
 
 Public uploads are disabled at the form and API. Existing private evidence is retained for authorized staff access. An authorized operator must reconcile any historical staged objects against `submissions`, report records and evidence metadata before deleting confirmed orphans. Privacy workflow status changes do not automatically delete records or objects.

@@ -1,13 +1,4 @@
-import {createRequire} from 'node:module';
-const require=createRequire(new URL('../functions/package.json',import.meta.url));
-const {initializeApp,applicationDefault}=require('firebase-admin/app');
-const {getAuth}=require('firebase-admin/auth');
-const projectId=process.argv[2];
-if(!projectId||!/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/.test(projectId)||projectId.startsWith('demo-'))throw Error('Usage: node scripts/enable-totp.mjs REAL_PROJECT_ID. Requires Application Default Credentials and Identity Platform enabled.');
-if(Object.keys(process.env).some(key=>key.endsWith('_EMULATOR_HOST')&&process.env[key]))throw Error('Unset emulator variables before updating cloud authentication.');
-initializeApp({credential:applicationDefault(),projectId});
-const manager=getAuth().projectConfigManager();
-const config=await manager.getProjectConfig();
-const providers=(config.multiFactorConfig?.providerConfigs||[]).filter(provider=>!provider.totpProviderConfig);
-await manager.updateProjectConfig({multiFactorConfig:{providerConfigs:[...providers,{state:'ENABLED',totpProviderConfig:{adjacentIntervals:1}}]}});
-console.log(`TOTP MFA enabled in ${projectId}. Verified staff users can now enroll through the app.`);
+// Retain an explicit failure for obsolete deployment commands so they cannot
+// restore second-factor authentication after the password-only migration.
+console.error('This command is retired. Staff use verified email and password. Follow DEPLOYMENT.md, step 6, to disable project MFA providers and migrate any existing staff enrollments. No authentication settings were changed.');
+process.exitCode=1;

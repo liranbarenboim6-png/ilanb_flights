@@ -1,7 +1,7 @@
 import {createHash} from 'node:crypto';
 import type {Request} from 'express';
 import busboy from 'busboy';
-import {getAuth} from 'firebase-admin/auth';
+import {getAuth,type DecodedIdToken} from 'firebase-admin/auth';
 import {getAppCheck} from 'firebase-admin/app-check';
 import {getFirestore,Timestamp} from 'firebase-admin/firestore';
 import {defineSecret} from 'firebase-functions/params';
@@ -33,14 +33,19 @@ export async function requireAppCheck(req:Request){
  const token=req.get('X-Firebase-AppCheck');if(!token)throw new ApiError(403,'לא ניתן לאמת את הבקשה. יש לרענן ולנסות שוב.');
  try{await getAppCheck().verifyToken(token);}catch{throw new ApiError(403,'לא ניתן לאמת את הבקשה. יש לרענן ולנסות שוב.');}
 }
+/** Staff access requires verified email and a Firebase email/password sign-in. */
+export function requireAdminIdentity(decoded:Pick<DecodedIdToken,'email_verified'|'firebase'>):'password'{
+ if(decoded.email_verified!==true||decoded.firebase?.sign_in_provider!=='password')throw new ApiError(403,'נדרשת התחברות עם סיסמה וכתובת דוא״ל מאומתת.');
+ return 'password';
+}
 export async function requireAdmin(req:Request,role?:Role):Promise<AdminSession>{
  const authorization=req.get('authorization')||'';
  if(!authorization.startsWith('Bearer '))throw new ApiError(401,'נדרשת התחברות למערכת הניהול.');
  let decoded;try{decoded=await getAuth().verifyIdToken(authorization.slice(7),true);}catch{throw new ApiError(401,'פג תוקף ההתחברות. יש להתחבר שוב.');}
- if(!isEmulator()&&(decoded.firebase?.sign_in_second_factor!=='totp'||decoded.email_verified!==true))throw new ApiError(403,'נדרשת התחברות עם אימות דו-שלבי TOTP וכתובת דוא״ל מאומתת.');
+ const identity=isEmulator()?'emulator-only':requireAdminIdentity(decoded);
  const membership=await getFirestore().collection('admins').doc(decoded.uid).get();const data=membership.data();
  if(!data||data.active!==true||!['administrator','reviewer'].includes(data.role)||(role&&role!==data.role))throw new ApiError(403,'אין הרשאה לפעולה זו.');
- return {id:decoded.uid,email:decoded.email||'',role:data.role,mode:mode(),aal:isEmulator()?'emulator-only':'totp'};
+ return {id:decoded.uid,email:decoded.email||'',role:data.role,mode:mode(),aal:identity};
 }
 export function rateScope(req:Request,reporterEmail?:string){
  if(reporterEmail!==undefined)return `reporter:${reporterEmail.trim().normalize('NFKC').toLowerCase()}`;

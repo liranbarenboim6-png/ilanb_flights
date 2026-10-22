@@ -42,7 +42,7 @@ Open **[the admin login](http://127.0.0.1:5000/admin/login)** after starting the
 | Administrator | `admin@example.invalid` | `DemoOnly!2026` |
 | Reviewer | `reviewer@example.invalid` | `DemoOnly!2026` |
 
-These accounts and 12 sample reports exist only in the local Firebase emulators under project `demo-aviation-rights`. All sample people, companies and reports are fictional. Production staff access requires verified email, TOTP authentication and an active Firestore role. The emulator bypass is restricted to a demo project with all emulator hosts on the local computer.
+These accounts and 12 sample reports exist only in the local Firebase emulators under project `demo-aviation-rights`. All sample people, companies and reports are fictional. Production staff sign in with their email and password. Access also requires a verified email address and an active Firestore staff role; there is no SMS or authenticator enrollment step. The emulator bypass is restricted to a demo project with all emulator hosts on the local computer.
 
 The launcher does not export emulator data on shutdown. New local reports and changes are lost when the emulators stop; a new start recreates the fictional samples. Keep real consumer data out of the local demo.
 
@@ -105,7 +105,7 @@ Then open **[http://127.0.0.1:5173](http://127.0.0.1:5173)**. The Vite server fo
 
 ## Production configuration and deployment
 
-Project `ilanb-flights` has billing linked, a Standard edition Firestore database, a private Storage bucket, Email/Password authentication with Identity Platform TOTP, reCAPTCHA Enterprise App Check, and a server rate-limit secret configured. Production environment files are ignored by Git; another checkout must supply its own values and authorized Google sign-in. Follow **[DEPLOYMENT.md](DEPLOYMENT.md)** to deploy this project or configure another one.
+Project `ilanb-flights` has billing linked, a Standard edition Firestore database, a private Storage bucket, Email/Password authentication, reCAPTCHA Enterprise App Check, and a server rate-limit secret configured. Staff sign in using verified email and password; Firebase MFA providers are disabled for this login policy. Public account signup remains disabled, and staff data requires an active authorized role. Production environment files are ignored by Git; another checkout must supply its own values and authorized Google sign-in. Follow **[DEPLOYMENT.md](DEPLOYMENT.md)** to configure authentication and deploy this project or configure another one.
 
 The production build is separate from the emulator build. `pnpm build` writes `dist`, while `pnpm build:emulator` writes `dist-emulator`. The deployment helper checks that the selected real project and production environment agree.
 

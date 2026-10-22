@@ -1,7 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import type {Request as ExpressRequest} from 'express';
-import {isEmulator,loopbackEndpoint,multipart,csvCell,rateScope,rateDocumentId} from '../functions/src/security';
+import {ApiError,isEmulator,loopbackEndpoint,multipart,csvCell,rateScope,rateDocumentId,requireAdminIdentity} from '../functions/src/security';
+
+const authClaims=(emailVerified=true,provider='password')=>({email_verified:emailVerified,firebase:{identities:{},sign_in_provider:provider}});
+test('staff identity accepts verified Firebase password sign-in without MFA',()=>{
+ assert.equal(requireAdminIdentity(authClaims()),'password');
+});
+test('staff identity rejects phone, anonymous, custom and other non-password sign-in providers',()=>{
+ for(const provider of ['phone','anonymous','custom','google.com','']){
+  assert.throws(()=>requireAdminIdentity(authClaims(true,provider)),error=>error instanceof ApiError&&error.status===403);
+ }
+});
+test('staff identity rejects unverified or missing email verification',()=>{
+ assert.throws(()=>requireAdminIdentity(authClaims(false)),error=>error instanceof ApiError&&error.status===403);
+ const unverified={firebase:authClaims().firebase};
+ assert.throws(()=>requireAdminIdentity(unverified),error=>error instanceof ApiError&&error.status===403);
+});
 
 test('CSV cells prevent spreadsheet formulas and escape quotes',()=>{
  assert.equal(csvCell(' =SUM(1,2)'),`"' =SUM(1,2)"`);
